@@ -11,13 +11,14 @@
 
 package org.usfirst.frc5124.RescueEndeavor;
 
-import java.awt.Color;
 import java.util.Map;
 
 import org.usfirst.frc5124.RescueEndeavor.commands.*;
 
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
-import edu.wpi.cscore.VideoSink;
+import edu.wpi.cscore.VideoMode;
 import edu.wpi.cscore.VideoMode.PixelFormat;
 import edu.wpi.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.cameraserver.CameraServer;
@@ -74,9 +75,11 @@ public class OI {
     public final XboxController driver;
     public final XboxController operator;
 
-    public final VideoSink server;
+    public final CvSink frontSink;
+    public final CvSink backSink;
     public final UsbCamera front;
     public final UsbCamera back;
+    public final CvSource imageStream;
     public boolean frontSelected;
 
     private final Button driverRightBumper;
@@ -96,20 +99,23 @@ public class OI {
 
         front = CameraServer.getInstance().startAutomaticCapture();
         front.setResolution(640, 480);
-        front.setPixelFormat(PixelFormat.kBGR);
+        front.setFPS(15);
+        front.setPixelFormat(PixelFormat.kMJPEG);
         front.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
+        frontSink = CameraServer.getInstance().getVideo(front);
 
         back = CameraServer.getInstance().startAutomaticCapture();
         back.setResolution(640, 480);
-        back.setPixelFormat(PixelFormat.kBGR);
+        front.setFPS(15);
+        back.setPixelFormat(PixelFormat.kMJPEG);
         back.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
+        backSink = CameraServer.getInstance().getVideo(back);
 
-        server = CameraServer.getInstance().getServer();
-        server.setSource(front);
+        imageStream = new CvSource("Image Stream", new VideoMode(PixelFormat.kMJPEG, 640, 480, 15));
         frontSelected = true;
 
         ShuffleboardTab display = Shuffleboard.getTab("Driver Display");
-        display.add("Camera View", server.getSource())
+        display.add("Camera View", imageStream)
                 .withWidget(BuiltInWidgets.kCameraStream)
                 .withSize(8, 6)
                 .withPosition(1, 0)
